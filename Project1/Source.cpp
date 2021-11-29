@@ -13,6 +13,7 @@ private:
 	void* LoadFunc = NULL_PTR;
 protected:
 	CryptoToken(const wchar_t*);
+	~CryptoToken();
 	void LoadProc(HINSTANCE, const char*);
 	CK_FUNCTION_LIST_PTR FuncList = NULL_PTR;
 	CK_FLAGS Flags = 0;
@@ -133,4 +134,8 @@ int Token::GetTokenInfo(unsigned int slot) {
 	CK_RV rv = pC_GetTokenInfo(SlotList[slot - 1], &TokenInfo);
 	if (rv != CKR_OK)throw RetVal(rv);
 	return rv;
+}
+
+int main() {
+
 }
