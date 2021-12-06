@@ -6,7 +6,7 @@ class BaseException
 protected:
 	// объ€снение к исключению - общее дл€ всех производных классов
 	std::string text;
-	int code;
+	int code = 0;
 
 
 public:

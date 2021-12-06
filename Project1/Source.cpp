@@ -11,39 +11,47 @@ class CryptoToken {
 private:
 	HINSTANCE hLib;
 	void* LoadFunc = NULL_PTR;
-protected:
-	CryptoToken(const wchar_t*);
-	~CryptoToken();
 	void LoadProc(HINSTANCE, const char*);
 	CK_FUNCTION_LIST_PTR FuncList = NULL_PTR;
 	CK_FLAGS Flags = 0;
-	CK_VOID_PTR pReserved;
-	CK_SLOT_ID_PTR SlotList = NULL_PTR; /*Не совсем уверен, что стоит засовывать это поле в базовый класс,
-										но не знаю как по нормальному реализовать доступ к нему из метода GetTokenInfo класса Token :/ 
-										*/
+	CK_VOID_PTR pReserved = NULL_PTR;
 public:
+	CryptoToken(const wchar_t*);
+	~CryptoToken();
 	int GetFunctionList();
 	int Initialize();
 	int Initialize(CK_C_INITIALIZE_ARGS);
 	int Finalize();
+
+	CK_FUNCTION_LIST_PTR GetFuncListPtr() {
+		return FuncList;
+	}
+
+	CK_SLOT_ID_PTR GetSlotCollection(Slot Sl) {
+		return Sl.GetSlotListPtr();
+	}
 };
 
-class Slot : public CryptoToken {
+class Slot{
 private:
-	
+	CK_SLOT_ID_PTR SlotList = NULL_PTR;
 	CK_ULONG ListCount;
 	CK_SLOT_INFO SlotInfo;
 public:
-	int GetSlotList(CK_BBOOL);
-	int GetSlotInfo(unsigned int);
-	int WaitForSlotEvent();
+	int GetSlotList(CK_BBOOL, CryptoToken);
+	int GetSlotInfo(unsigned int, CryptoToken CrTok);
+	//int WaitForSlotEvent();
+
+	CK_SLOT_ID_PTR GetSlotListPtr() {
+		return SlotList; 
+	}
 };
 
-class Token : public CryptoToken {
+class Token{
 private:
 	CK_TOKEN_INFO TokenInfo;
 public:
-	int GetTokenInfo(unsigned int);
+	int GetTokenInfo(unsigned int, CryptoToken, Slot);
 };
 
 CryptoToken::CryptoToken(const wchar_t* PATH_TO_DLL) {
@@ -90,18 +98,18 @@ int CryptoToken::Finalize() {
 }
 
 CryptoToken::~CryptoToken() {
-	if (SlotList != NULL_PTR) {
+	/*if (SlotList != NULL_PTR) {
 		delete SlotList;
 		SlotList = NULL_PTR;
 	}
 	if (hLib != NULL) {
 		FreeLibrary(hLib);
-	}
+	}*/
 }
 
-int Slot::GetSlotList(CK_BBOOL token_present) {
-	if (FuncList == NULL) throw FuncListErr();
-	CK_C_GetSlotList pC_GetSlotList = FuncList->C_GetSlotList;
+int Slot::GetSlotList(CK_BBOOL token_present, CryptoToken CrTok) {
+	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
+	CK_C_GetSlotList pC_GetSlotList = CrTok.GetFuncListPtr()->C_GetSlotList;
 	CK_RV rv = pC_GetSlotList(token_present, NULL_PTR, &ListCount);
 	if (rv != CKR_OK) throw RetVal(rv);
 	SlotList = new CK_SLOT_ID;
@@ -110,28 +118,20 @@ int Slot::GetSlotList(CK_BBOOL token_present) {
 	return rv;
 }
 
-int Slot::GetSlotInfo(unsigned int slot) {
-	if (FuncList == NULL) throw FuncListErr();
+int Slot::GetSlotInfo(unsigned int slot, CryptoToken CrTok) {
+	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
 	if (slot == 0) throw PKCSExceptions();
-	CK_C_GetSlotInfo pC_GetSlotInfo = FuncList->C_GetSlotInfo;
+	CK_C_GetSlotInfo pC_GetSlotInfo = CrTok.GetFuncListPtr()->C_GetSlotInfo;
 	CK_RV rv = pC_GetSlotInfo(SlotList[slot - 1], &SlotInfo);
 	if (rv != CKR_OK) throw RetVal(rv);
 	return rv;
 }
 
-int Slot::WaitForSlotEvent() {
-	if (FuncList == NULL) throw FuncListErr();
-	CK_C_WaitForSlotEvent pC_WaitForSlotEvent = FuncList->C_WaitForSlotEvent;
-	CK_RV rv = pC_WaitForSlotEvent(Flags, SlotList, pReserved);
-	if (rv != CKR_OK) throw RetVal(rv);
-	return rv;
-}
-
-int Token::GetTokenInfo(unsigned int slot) {
-	if (FuncList == NULL) throw FuncListErr();
+int Token::GetTokenInfo(unsigned int slot, CryptoToken CrTok, Slot Sl) {
+	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
 	if (slot == 0) throw PKCSExceptions();
-	CK_C_GetTokenInfo pC_GetTokenInfo = FuncList->C_GetTokenInfo;
-	CK_RV rv = pC_GetTokenInfo(SlotList[slot - 1], &TokenInfo);
+	CK_C_GetTokenInfo pC_GetTokenInfo = CrTok.GetFuncListPtr()->C_GetTokenInfo;
+	CK_RV rv = pC_GetTokenInfo(Sl.GetSlotListPtr()[slot], &TokenInfo);
 	if (rv != CKR_OK)throw RetVal(rv);
 	return rv;
 }
