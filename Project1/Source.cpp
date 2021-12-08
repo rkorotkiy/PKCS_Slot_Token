@@ -56,7 +56,7 @@ public:
 		Cr.GetSlotColPtr().push_back(this);
 	}
 
-	CK_SLOT_ID_PTR GetSlotListPtr() {
+	static CK_SLOT_ID_PTR GetSlotListPtr() {
 		return SlotList;
 	}
 
