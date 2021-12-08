@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <Windows.h>
 #include <libloaderapi.h>
+#include <vector>
 #include "pkcs11.h"
 #include "tdef.h"
 #include "PKCSExceptions.h"
-#include <string>
+
+
 
 class CryptoToken {
 private:
@@ -15,6 +17,7 @@ private:
 	CK_FUNCTION_LIST_PTR FuncList = NULL_PTR;
 	CK_FLAGS Flags = 0;
 	CK_VOID_PTR pReserved = NULL_PTR;
+	std::vector<Slot*> SlotCollection;
 public:
 	CryptoToken(const wchar_t*);
 	~CryptoToken();
@@ -27,24 +30,36 @@ public:
 		return FuncList;
 	}
 
-	CK_SLOT_ID_PTR GetSlotCollection(Slot Sl) {
-		return Sl.GetSlotListPtr();
+	std::vector<Slot*> GetSlotColPtr() {
+		return this->SlotCollection;
 	}
+
+	void PrintSlots() {
+		for (int i = 0; i < SlotCollection.size(); i++) {
+			std::cout << SlotCollection[i] << std::endl;
+		}
+	}
+
 };
 
 class Slot{
+
 private:
-	CK_SLOT_ID_PTR SlotList = NULL_PTR;
-	CK_ULONG ListCount;
+	static CK_SLOT_ID_PTR SlotList;
+	static CK_ULONG ListCount;
 	CK_SLOT_INFO SlotInfo;
 public:
 	int GetSlotList(CK_BBOOL, CryptoToken);
 	int GetSlotInfo(unsigned int, CryptoToken CrTok);
-	//int WaitForSlotEvent();
+
+	void PushToSlotCollection(CryptoToken Cr) {
+		Cr.GetSlotColPtr().push_back(this);
+	}
 
 	CK_SLOT_ID_PTR GetSlotListPtr() {
-		return SlotList; 
+		return SlotList;
 	}
+
 };
 
 class Token{
@@ -53,6 +68,12 @@ private:
 public:
 	int GetTokenInfo(unsigned int, CryptoToken, Slot);
 };
+
+
+
+/******************************************************************************************************************************************/
+
+
 
 CryptoToken::CryptoToken(const wchar_t* PATH_TO_DLL) {
 	hLib = LoadLibrary(PATH_TO_DLL);
@@ -107,6 +128,8 @@ CryptoToken::~CryptoToken() {
 	}*/
 }
 
+/******************************************************************************************************************************************/
+
 int Slot::GetSlotList(CK_BBOOL token_present, CryptoToken CrTok) {
 	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
 	CK_C_GetSlotList pC_GetSlotList = CrTok.GetFuncListPtr()->C_GetSlotList;
@@ -127,6 +150,8 @@ int Slot::GetSlotInfo(unsigned int slot, CryptoToken CrTok) {
 	return rv;
 }
 
+/******************************************************************************************************************************************/
+
 int Token::GetTokenInfo(unsigned int slot, CryptoToken CrTok, Slot Sl) {
 	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
 	if (slot == 0) throw PKCSExceptions();
@@ -136,6 +161,11 @@ int Token::GetTokenInfo(unsigned int slot, CryptoToken CrTok, Slot Sl) {
 	return rv;
 }
 
+/******************************************************************************************************************************************/
+
 int main() {
+
+
+
 
 }
