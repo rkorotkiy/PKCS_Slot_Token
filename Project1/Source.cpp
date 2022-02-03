@@ -18,10 +18,16 @@ private:
 public:
 	CryptoProvider(const wchar_t*);
 	~CryptoProvider();
+
 	void SetFunctionList();
 	void GetSlotCollection(CK_BBOOL tokenPresent, std::vector<CK_SLOT_ID>& slotCollection);
 	void Initialize(void*);  //   ???
 	void Finalize();
+
+	void OpenSession(CK_SLOT_ID slotID, CK_SESSION_HANDLE h_session);
+	void CloseSession(CK_SESSION_HANDLE h_session);
+
+	
 
 	CK_FUNCTION_LIST_PTR GetFuncListPtr() {
 		return m_funcList;
@@ -54,7 +60,6 @@ void CryptoProvider::SetFunctionList() {
 	if (rv != CKR_OK)
 		throw RetVal(rv);
 }
-
 
 void CryptoProvider::Initialize(void* initArgs = NULL_PTR) {
 	SetFunctionList();
@@ -99,6 +104,27 @@ void CryptoProvider::GetSlotCollection(CK_BBOOL tokenPresent, std::vector<CK_SLO
 
 }
 
+void CryptoProvider::OpenSession(CK_SLOT_ID slotID, CK_SESSION_HANDLE h_session) {
+	CK_RV rv;
+	CK_BYTE application = 1;
+	
+	rv = m_funcList->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, (CK_VOID_PTR)&application, NULL_PTR, &h_session);
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+void CryptoProvider::CloseSession(CK_SESSION_HANDLE h_session) {
+	CK_RV rv;
+
+	rv = m_funcList->C_CloseSession(h_session);
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+
+
 CryptoProvider::~CryptoProvider() {
 	if (m_lib != NULL) {
 		FreeLibrary(m_lib);
@@ -111,6 +137,8 @@ void PrintSlots(std::vector<CK_SLOT_ID>& slotCollection) {
 	}
 }
 
+
+
 class Slot{
 private:
 	CK_SLOT_ID m_id;
@@ -120,10 +148,17 @@ public:
 
 	CK_TOKEN_INFO* GetTokenInfo() {
 		CK_TOKEN_INFO* info = new CK_TOKEN_INFO();
-		m_provider->GetFuncListPtr()->C_GetTokenInfo(m_id, info);
+		CK_RV rv;
+
+		rv = m_provider->GetFuncListPtr()->C_GetTokenInfo(m_id, info);
+
+		if (rv != CKR_OK)
+			throw RetVal(rv);
 		return info;
 	}
 };
+
+
 
 class Token {
 private:
@@ -152,7 +187,65 @@ public:
 
 };
 
+
+
+class Object {
+private:
+	CryptoProvider* m_provider;
+
+public:
+	Object(CryptoProvider* provider) : m_provider(provider) { };
+	void CreateObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_object, 
+		CK_OBJECT_CLASS objClass, std::vector<CK_ATTRIBUTE> objTemplate);
+	void DestroyObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_object);
+};
+
+
+
+void Object::CreateObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_object, 
+	CK_OBJECT_CLASS objClass, std::vector<CK_ATTRIBUTE> objTemplate) {
+
+	CK_RV rv;
+	rv = m_provider->GetFuncListPtr()->C_CreateObject(h_session, &objTemplate[0], objTemplate.size(), &h_object);
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+void Object::DestroyObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_object) {
+	CK_RV rv;
+
+	rv = m_provider->GetFuncListPtr()->C_DestroyObject(h_session, h_object);
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+
+class key_AES {
+private:
+	CK_MECHANISM m_mechanism = {
+	  CKM_AES_KEY_GEN, NULL_PTR, 0
+	};
+	CryptoProvider* m_provider;
+
+public:
+	key_AES(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_key, CryptoProvider* provider, 
+		std::vector<CK_ATTRIBUTE> objTemplate) : m_provider(provider) {
+		CK_RV rv;
+		rv = m_provider->GetFuncListPtr()->C_GenerateKey(h_session, &m_mechanism, &objTemplate[0], objTemplate.size(), &h_key);
+
+		if (rv != CKR_OK)
+			throw RetVal(rv);
+
+	}
+
+};
+
+
+
 int main() {
+
 	CryptoProvider provider(L"D:\\SoftHSM2\\lib\\softhsm2-x64.dll");
 
 	provider.Initialize();
@@ -168,224 +261,5 @@ int main() {
 	}
 
 	provider.Finalize();
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//class CryptoToken {
-//private:
-//	HINSTANCE m_Lib;
-//	void* LoadFunc = NULL_PTR;
-//	void LoadProc(HINSTANCE, const char*);
-//	CK_FUNCTION_LIST_PTR FuncList = NULL_PTR;
-//	CK_FLAGS Flags = 0;
-//	CK_VOID_PTR pReserved = NULL_PTR;
-//	std::vector<Slot*> SlotCollection;
-//public:
-//	CryptoToken(const wchar_t*);
-//	~CryptoToken();
-//	int GetFunctionList();
-//	int Initialize();
-//	int Initialize(CK_C_INITIALIZE_ARGS);
-//	int Finalize();
-//
-//	CK_FUNCTION_LIST_PTR GetFuncListPtr() {
-//		return FuncList;
-//	}
-//
-//	std::vector<Slot*> GetSlotColPtr() {
-//		return this->SlotCollection;
-//	}
-//
-//	void PrintSlots() {
-//		for (int i = 0; i < SlotCollection.size(); i++) {
-//			std::cout << SlotCollection[i] << std::endl;
-//		}
-//	}
-//
-//};
-//
-//class Slot{
-//
-//private:
-//	static CK_SLOT_ID_PTR SlotList;
-//	static CK_ULONG ListCount;
-//	CK_SLOT_INFO SlotInfo;
-//public:
-//	int GetSlotList(CK_BBOOL, CryptoToken);
-//	int GetSlotInfo(unsigned int, CryptoToken CrTok);
-//
-//	void PushToSlotCollection(CryptoToken Cr) {
-//		Cr.GetSlotColPtr().push_back(this);
-//	}
-//
-//	static CK_SLOT_ID_PTR GetSlotListPtr() {
-//		return SlotList;
-//	}
-//
-//};
-//
-//class Token{
-//private:
-//	CK_TOKEN_INFO TokenInfo;
-//public:
-//	int GetTokenInfo(unsigned int, CryptoToken, Slot);
-//};
-//
-//
-//
-///******************************************************************************************************************************************/
-//
-//
-//
-//CryptoToken::CryptoToken(const wchar_t* PATH_TO_DLL) {
-//	hLib = LoadLibrary(PATH_TO_DLL);
-//}
-//
-//void CryptoToken::LoadProc(HINSTANCE hLib, const char* FUNC_NAME) {
-//	LoadFunc = (void*)GetProcAddress(hLib, FUNC_NAME);
-//}
-//
-//int CryptoToken::GetFunctionList() {
-//	if (hLib == NULL) throw  LibLoadErr();
-//	LoadProc(hLib, "C_GetFunctionList");
-//	if (LoadFunc == NULL) throw FuncLoadErr();
-//	int (*C_GetFuncList)(CK_FUNCTION_LIST_PTR_PTR);
-//	C_GetFuncList = (C_GetFunctionList_decl)LoadFunc;
-//	CK_RV rv = C_GetFuncList(&FuncList);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-//int CryptoToken::Initialize() {
-//	if (FuncList == NULL) throw FuncListErr();
-//	CK_C_Initialize pC_Initialize = FuncList->C_Initialize;
-//	CK_RV rv = pC_Initialize(NULL_PTR);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-//int CryptoToken::Initialize(CK_C_INITIALIZE_ARGS InitArgs = NULL_PTR) {
-//	if (FuncList == NULL) throw FuncListErr();
-//	CK_C_Initialize pC_Initialize = FuncList->C_Initialize;
-//	CK_RV rv = pC_Initialize((CK_VOID_PTR)&InitArgs);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-//int CryptoToken::Finalize() {
-//	if (FuncList == NULL) throw FuncListErr();
-//	CK_C_Finalize pC_Finalize = FuncList->C_Finalize;
-//	CK_RV rv = pC_Finalize(NULL_PTR);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-//CryptoToken::~CryptoToken() {
-//	/*if (SlotList != NULL_PTR) {
-//		delete SlotList;
-//		SlotList = NULL_PTR;
-//	}
-//	if (hLib != NULL) {
-//		FreeLibrary(hLib);
-//	}*/
-//}
-//
-///******************************************************************************************************************************************/
-//
-//int Slot::GetSlotList(CK_BBOOL token_present, CryptoToken CrTok) {
-//	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
-//	CK_C_GetSlotList pC_GetSlotList = CrTok.GetFuncListPtr()->C_GetSlotList;
-//	CK_RV rv = pC_GetSlotList(token_present, NULL_PTR, &ListCount);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	SlotList = new CK_SLOT_ID;
-//	rv = pC_GetSlotList(token_present, SlotList, &ListCount);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-//int Slot::GetSlotInfo(unsigned int slot, CryptoToken CrTok) {
-//	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
-//	if (slot == 0) throw PKCSExceptions();
-//	CK_C_GetSlotInfo pC_GetSlotInfo = CrTok.GetFuncListPtr()->C_GetSlotInfo;
-//	CK_RV rv = pC_GetSlotInfo(SlotList[slot - 1], &SlotInfo);
-//	if (rv != CKR_OK) throw RetVal(rv);
-//	return rv;
-//}
-//
-///******************************************************************************************************************************************/
-//
-//int Token::GetTokenInfo(unsigned int slot, CryptoToken CrTok, Slot Sl) {
-//	if (CrTok.GetFuncListPtr() == NULL) throw FuncListErr();
-//	if (slot == 0) throw PKCSExceptions();
-//	CK_C_GetTokenInfo pC_GetTokenInfo = CrTok.GetFuncListPtr()->C_GetTokenInfo;
-//	CK_RV rv = pC_GetTokenInfo(Sl.GetSlotListPtr()[slot], &TokenInfo);
-//	if (rv != CKR_OK)throw RetVal(rv);
-//	return rv;
-//}
-//
-///******************************************************************************************************************************************/
-//
-//int main() {
-//
-//
-//
-//
-//}
-
-
-
-
-
-
-
-
-
-
-
