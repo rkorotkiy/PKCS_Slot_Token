@@ -1,5 +1,6 @@
 #include <string>
 #include <iostream>
+#include "pkcs11.h"
 
 class BaseException
 {
@@ -19,7 +20,7 @@ public:
 	PKCSExceptions()
 	{
 		text = "Error. PKCS Exception.";
-		int code = 1;
+		code = 1;
 	}
 
 	// конструктор с заданным текстом
@@ -33,10 +34,10 @@ public:
 class RetVal final :public PKCSExceptions {
 public:
 	// конструктор, который содержит текст описывающий данное исключение
-	RetVal(int RV) : PKCSExceptions()
+	RetVal(unsigned long RV) : PKCSExceptions()
 	{
 		text = "Return value is not CKR_OK. Code " + std::to_string(RV); // текст по умолчанию
-		int code = 2;
+		code = 2;
 	}
 
 	std::string what()
@@ -51,7 +52,7 @@ public:
 	LibLoadErr() : PKCSExceptions()
 	{
 		text = "Error loading library.";
-		int code = 3;
+		code = 3;
 	}
 
 	std::string what() 
@@ -66,7 +67,7 @@ public:
 	FuncLoadErr() : PKCSExceptions()
 	{
 		text = "Error loading function.";
-		int code = 4;
+		code = 4;
 	}
 
 	std::string what()
@@ -81,7 +82,7 @@ public:
 	FuncListErr() : PKCSExceptions() 
 	{
 		text = "CK_FUNCTION_LIST_PTR == NULL.";
-		int code = 5;
+		code = 5;
 	}
 	std::string what()
 	{
