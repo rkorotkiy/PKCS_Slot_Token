@@ -24,7 +24,9 @@ public:
 	void Initialize(void*);  //   ???
 	void Finalize();
 
-	void InitPin(CK_SESSION_HANDLE& h_session, CK_UTF8CHAR pin);
+	void Login(CK_SESSION_HANDLE& h_session, CK_USER_TYPE userType);
+	void Logout(CK_SESSION_HANDLE& h_session);
+	void InitPin(CK_SESSION_HANDLE& h_session);
 
 	void OpenSession(CK_SLOT_ID slotID, CK_SESSION_HANDLE& h_session, CK_BYTE application);
 	void CloseSession(CK_SESSION_HANDLE& h_session);
@@ -70,7 +72,7 @@ void CryptoProvider::Initialize(void* initArgs = NULL_PTR) {
 	if (m_funcList == NULL)
 		throw FuncListErr();
 
-	CK_RV rv = m_funcList->C_Initialize(initArgs); //TODO: Check 
+	CK_RV rv = m_funcList->C_Initialize(initArgs); 
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);
@@ -143,10 +145,40 @@ void CryptoProvider::DestroyObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDL
 		throw RetVal(rv);
 }
 
-void CryptoProvider::InitPin(CK_SESSION_HANDLE& h_session, CK_UTF8CHAR pin) {
+void CryptoProvider::InitPin(CK_SESSION_HANDLE& h_session) {
+	CK_RV rv;
+	std::string PIN;
+	CK_UTF8CHAR PINBuff[32];
+
+	std::cout << "Введите PIN: ";
+	std::cin >> PIN;
+	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
+
+	rv = GetFuncListPtr()->C_InitPIN(h_session, PINBuff, strlen(PIN.c_str()));
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+void CryptoProvider::Login(CK_SESSION_HANDLE& h_session, CK_USER_TYPE userType) {
+	CK_RV rv;
+	std::string PIN;
+	CK_UTF8CHAR PINBuff[32];
+
+	std::cout << "Введите PIN: ";
+	std::cin >> PIN;
+	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
+
+	rv = GetFuncListPtr()->C_Login(h_session, userType, PINBuff, strlen(PIN.c_str()));
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
+
+void CryptoProvider::Logout(CK_SESSION_HANDLE& h_session) {
 	CK_RV rv;
 
-	rv = GetFuncListPtr()->C_InitPIN(h_session, &pin, sizeof(pin) - 1);
+	rv = GetFuncListPtr()->C_Logout(h_session);
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);
@@ -173,17 +205,44 @@ private:
 public:
 	Slot(CK_SLOT_ID id, CryptoProvider* provider) : m_id(id), m_provider(provider) { }
 
-	CK_TOKEN_INFO* GetTokenInfo() {
-		CK_TOKEN_INFO* info = new CK_TOKEN_INFO();
-		CK_RV rv;
+	CK_TOKEN_INFO* GetTokenInfo();
 
-		rv = m_provider->GetFuncListPtr()->C_GetTokenInfo(m_id, info);
+	void InitToken();
 
-		if (rv != CKR_OK)
-			throw RetVal(rv);
-		return info;
-	}
 };
+
+CK_TOKEN_INFO* Slot::GetTokenInfo() {
+	CK_TOKEN_INFO* info = new CK_TOKEN_INFO();
+	CK_RV rv;
+
+	rv = m_provider->GetFuncListPtr()->C_GetTokenInfo(m_id, info);
+
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+	return info;
+}
+
+void Slot::InitToken() {
+	CK_RV rv;
+	
+	std::string PIN;
+	CK_UTF8CHAR PINBuff[32];
+	std::string label;
+	CK_UTF8CHAR labelBuff[32];
+	std::cout << "Введите PIN Администратора: ";
+	std::cin >> PIN;
+	std::cout << "Введите значение label для токена: ";
+	std::cin >> label;
+
+	memset(labelBuff, ' ', sizeof(labelBuff));
+	memcpy(labelBuff, label.c_str(), label.size()+1);
+	memcpy(PINBuff, PIN.c_str(), PIN.size()+1);
+
+	rv = m_provider->GetFuncListPtr()->C_InitToken(m_id, PINBuff, strlen(PIN.c_str()), labelBuff);
+	
+	if (rv != CKR_OK)
+		throw RetVal(rv);
+}
 
 
 
@@ -241,9 +300,12 @@ public:
 
 int main() {
 
+	setlocale(0, "");
+
 	CryptoProvider provider(L"D:\\SoftHSM2\\lib\\softhsm2-x64.dll");
 
 	CK_BYTE app = 1;
+	
 
 	CK_C_INITIALIZE_ARGS initArgs;
 
@@ -277,14 +339,25 @@ int main() {
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}
+
 	std::vector<Token*> tokenCollection;
 	for (size_t i = 0; i < slotCollection.size(); ++i) {
 		Slot slot(slotCollection[i], &provider);
+		try {
+			slot.InitToken();
+		}
+		catch (RetVal RetEx) {
+			std::cout << "InitToken\n";
+			std::cout << RetEx.what();
+			return RetEx.errcode();
+		}
 		Token token(&provider, slot.GetTokenInfo());
 		tokenCollection.push_back(&token);
 	}
 
 	PrintSlots(slotCollection);
+
+
 
 	CK_SESSION_HANDLE h_Session;
 
@@ -297,25 +370,58 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	CK_UTF8CHAR PIN[] = { "1234" };
 
-	provider.InitPin(h_Session, *PIN);
 
+	try {
+		provider.Login(h_Session, CKU_SO);
+	}
+	catch (RetVal RetEx) {
+		std::cout << "Login\n";
+		std::cout << RetEx.what();
+		return RetEx.errcode();
+	}
+
+	try {
+		provider.InitPin(h_Session);
+	}
+	catch (RetVal RetEx) {
+		std::cout << "InitPin\n";
+		std::cout << RetEx.what();
+		return RetEx.errcode();
+	}
+
+	try {
+		provider.Logout(h_Session);
+	}
+	catch (RetVal RetEx) {
+		std::cout << "Login\n";
+		std::cout << RetEx.what();
+		return RetEx.errcode();
+	}
+
+	try {
+		provider.Login(h_Session, CKU_USER);
+	}
+	catch (RetVal RetEx) {
+		std::cout << "Login\n";
+		std::cout << RetEx.what();
+		return RetEx.errcode();
+	}
+
+	
 
 	CK_OBJECT_HANDLE h_Key;
 
 	CK_OBJECT_CLASS KeyClass = CKO_SECRET_KEY;
 	CK_KEY_TYPE KeyType = CKK_AES;
 	CK_BBOOL True = CK_TRUE;
-	
+	CK_BBOOL False = CK_FALSE;
+
 	std::vector<CK_ATTRIBUTE> keyTemplate
 	{
 		{CKA_CLASS, &KeyClass, sizeof(KeyClass)},
 		{CKA_KEY_TYPE, &KeyType, sizeof(KeyType)},
-		{CKA_WRAP, &True, sizeof(True)},
-		{CKA_UNWRAP, &True, sizeof(True)},
-		{CKA_ENCRYPT, &True, sizeof(True)},
-		{CKA_DECRYPT, &True, sizeof(True)},
+		{}
 	};
 
 	try {
