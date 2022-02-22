@@ -1,10 +1,4 @@
-#include "CryptoProvider.h"
-#include "PKCSExceptions.h"
-#include "tdef.h"
-
-
-
-
+#include "classes.h"
 
 CryptoProvider::CryptoProvider(const wchar_t* PATH_TO_DLL) {
 	m_lib = LoadLibrary(PATH_TO_DLL);
@@ -33,13 +27,13 @@ void CryptoProvider::SetFunctionList() {
 		throw RetVal(rv);
 }
 
-void CryptoProvider::Initialize(void* initArgs = NULL_PTR) {
+void CryptoProvider::Initialize() {
 	SetFunctionList();
 
 	if (m_funcList == NULL)
 		throw FuncListErr();
 
-	CK_RV rv = m_funcList->C_Initialize(initArgs);
+	CK_RV rv = m_funcList->C_Initialize(NULL_PTR);
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);
@@ -81,19 +75,19 @@ void CryptoProvider::GetSlotCollection(CK_BBOOL tokenPresent, std::vector<Slot*>
 
 }
 
-void CryptoProvider::CreateObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object, std::vector<CK_ATTRIBUTE>& objTemplate)
+void CryptoProvider::CreateObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE* h_object, std::vector<CK_ATTRIBUTE>& objTemplate)
 {
 	CK_RV rv;
-	rv = GetFuncListPtr()->C_CreateObject(h_session, &objTemplate[0], objTemplate.size(), &h_object);
+	rv = GetFuncListPtr()->C_CreateObject(h_session, &objTemplate[0], objTemplate.size(), h_object);
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);
 }
 
-void CryptoProvider::DestroyObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object) {
+void CryptoProvider::DestroyObject(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE* h_object) {
 	CK_RV rv;
 
-	rv = GetFuncListPtr()->C_DestroyObject(h_session, h_object);
+	rv = GetFuncListPtr()->C_DestroyObject(h_session, *h_object);
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);

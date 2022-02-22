@@ -1,5 +1,6 @@
-#include "Session.h"
-#include "PKCSExceptions.h"
+#include "classes.h"
+
+
 
 void Session::Close() {
 	CK_RV rv;

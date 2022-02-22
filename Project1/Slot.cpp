@@ -1,5 +1,4 @@
-#include "Slot.h"
-#include "PKCSExceptions.h"
+#include "classes.h"
 
 Session* Slot::OpenSession(CK_BYTE application) {
 	CK_RV rv;

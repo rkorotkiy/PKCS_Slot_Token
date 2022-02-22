@@ -3,13 +3,8 @@
 #include <Windows.h>
 #include <libloaderapi.h>
 #include <vector>
-#include "tdef.h"
-#include "PKCSExceptions.h"
-#include "pkcs11.h"
-#include "CryptoProvider.h"
-#include "Slot.h"
-#include "Session.h"
-#include "Token.h"
+
+#include "classes.h"
 
 
 void PrintSlots(std::vector<Slot*> slotStorage) {
@@ -143,7 +138,7 @@ int main() {
 	};
 
 	try {
-		provider.CreateObject(session->GetHandle(), h_Key, keyTemplate);
+		provider.CreateObject(session->GetHandle(), &h_Key, keyTemplate);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "CreateObject\n";
@@ -152,7 +147,7 @@ int main() {
 	}
 
 	try {
-		provider.DestroyObject(h_Session, h_Key);
+		provider.DestroyObject(session->GetHandle(), &h_Key);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "DestroyObject\n";
@@ -160,14 +155,14 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	/*try {
-		provider.CloseSession(h_Session);
+	try {
+		session->Close();
 	}
 	catch (RetVal RetEx) {
 		std::cout << "CloseSession\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
-	}*/
+	}
 
 	try {
 		provider.Finalize();
