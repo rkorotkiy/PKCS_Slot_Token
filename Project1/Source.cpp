@@ -3,299 +3,20 @@
 #include <Windows.h>
 #include <libloaderapi.h>
 #include <vector>
-#include "pkcs11.h"
 #include "tdef.h"
 #include "PKCSExceptions.h"
+#include "pkcs11.h"
+#include "CryptoProvider.h"
+#include "Slot.h"
+#include "Session.h"
+#include "Token.h"
 
 
-
-class CryptoProvider {
-private:
-	HINSTANCE m_lib;
-	CK_FUNCTION_LIST* m_funcList = NULL_PTR;
-
-	void* LoadProc(HINSTANCE, const char*);
-public:
-	CryptoProvider(const wchar_t*);
-	~CryptoProvider();
-
-	void SetFunctionList();
-	void GetSlotCollection(CK_BBOOL tokenPresent, std::vector<CK_SLOT_ID>& slotCollection);
-	void Initialize(void*);  //   ???
-	void Finalize();
-
-	void Login(CK_SESSION_HANDLE& h_session, CK_USER_TYPE userType);
-	void Logout(CK_SESSION_HANDLE& h_session);
-	void InitPin(CK_SESSION_HANDLE& h_session);
-
-	void OpenSession(CK_SLOT_ID slotID, CK_SESSION_HANDLE& h_session, CK_BYTE application);
-	void CloseSession(CK_SESSION_HANDLE& h_session);
-
-	void CreateObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object, std::vector<CK_ATTRIBUTE>& objTemplate);
-	void DestroyObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object);
-	
-	CK_FUNCTION_LIST_PTR GetFuncListPtr() {
-		return m_funcList;
-	}
-};
-
-CryptoProvider::CryptoProvider(const wchar_t* PATH_TO_DLL) {
-	m_lib = LoadLibrary(PATH_TO_DLL);
-}
-
-void* CryptoProvider::LoadProc(HINSTANCE hLib, const char* FUNC_NAME) {
-	return (void*)GetProcAddress(hLib, FUNC_NAME);
-}
-
-void CryptoProvider::SetFunctionList() {
-
-	if (m_lib == NULL)
-		throw  LibLoadErr();
-
-	void* func = LoadProc(m_lib, "C_GetFunctionList");
-
-	if (func == NULL)
-		throw FuncLoadErr();
-
-	int (*C_GetFuncList)(CK_FUNCTION_LIST**);
-	C_GetFuncList = (C_GetFunctionList_decl)func;
-
-	CK_RV rv = C_GetFuncList(&m_funcList);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::Initialize(void* initArgs = NULL_PTR) {
-	SetFunctionList();
-
-	if (m_funcList == NULL)
-		throw FuncListErr();
-
-	CK_RV rv = m_funcList->C_Initialize(initArgs); 
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-
-}
-
-void CryptoProvider::Finalize() {
-	if (m_funcList == NULL)
-		throw FuncListErr();
-
-	CK_RV rv = m_funcList->C_Finalize(NULL_PTR);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-
-}
-
-void CryptoProvider::GetSlotCollection(CK_BBOOL tokenPresent, std::vector<CK_SLOT_ID>& slotCollection) {
-
-	CK_ULONG pulCount;
-	CK_RV rv = m_funcList->C_GetSlotList(tokenPresent, NULL_PTR, &pulCount);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-
-	if (pulCount <= 0)
-		return;
-
-	slotCollection.resize(pulCount);
-	rv = m_funcList->C_GetSlotList(tokenPresent, &slotCollection[0], &pulCount);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-
-}
-
-void CryptoProvider::OpenSession(CK_SLOT_ID slotID, CK_SESSION_HANDLE& h_session, CK_BYTE application) {
-	CK_RV rv;
-	
-	rv = m_funcList->C_OpenSession(slotID, CKF_SERIAL_SESSION | CKF_RW_SESSION, (CK_VOID_PTR)&application, NULL_PTR, &h_session);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::CloseSession(CK_SESSION_HANDLE& h_session) {
-	CK_RV rv;
-
-	rv = m_funcList->C_CloseSession(h_session);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::CreateObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object, std::vector<CK_ATTRIBUTE>& objTemplate)
-{
-	CK_RV rv;
-	rv = GetFuncListPtr()->C_CreateObject(h_session, &objTemplate[0], objTemplate.size(), &h_object);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::DestroyObject(CK_SESSION_HANDLE& h_session, CK_OBJECT_HANDLE& h_object) {
-	CK_RV rv;
-
-	rv = GetFuncListPtr()->C_DestroyObject(h_session, h_object);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::InitPin(CK_SESSION_HANDLE& h_session) {
-	CK_RV rv;
-	std::string PIN;
-	CK_UTF8CHAR PINBuff[32];
-
-	std::cout << "Введите PIN: ";
-	std::cin >> PIN;
-	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
-
-	rv = GetFuncListPtr()->C_InitPIN(h_session, PINBuff, strlen(PIN.c_str()));
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::Login(CK_SESSION_HANDLE& h_session, CK_USER_TYPE userType) {
-	CK_RV rv;
-	std::string PIN;
-	CK_UTF8CHAR PINBuff[32];
-
-	std::cout << "Введите PIN: ";
-	std::cin >> PIN;
-	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
-
-	rv = GetFuncListPtr()->C_Login(h_session, userType, PINBuff, strlen(PIN.c_str()));
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-void CryptoProvider::Logout(CK_SESSION_HANDLE& h_session) {
-	CK_RV rv;
-
-	rv = GetFuncListPtr()->C_Logout(h_session);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-CryptoProvider::~CryptoProvider() {
-	if (m_lib != NULL) {
-		FreeLibrary(m_lib);
+void PrintSlots(std::vector<Slot*> slotStorage) {
+	for (size_t i = 0; i < slotStorage.size(); ++i) {
+		std::cout << slotStorage[i]->GetSlotId() << std::endl;
 	}
 }
-
-void PrintSlots(std::vector<CK_SLOT_ID>& slotCollection) {
-	for (size_t i = 0; i < slotCollection.size(); ++i) {
-		std::cout << slotCollection[i] << std::endl;
-	}
-}
-
-
-
-class Slot{
-private:
-	CK_SLOT_ID m_id;
-	CryptoProvider* m_provider;
-public:
-	Slot(CK_SLOT_ID id, CryptoProvider* provider) : m_id(id), m_provider(provider) { }
-
-	CK_TOKEN_INFO* GetTokenInfo();
-
-	void InitToken();
-
-};
-
-CK_TOKEN_INFO* Slot::GetTokenInfo() {
-	CK_TOKEN_INFO* info = new CK_TOKEN_INFO();
-	CK_RV rv;
-
-	rv = m_provider->GetFuncListPtr()->C_GetTokenInfo(m_id, info);
-
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-	return info;
-}
-
-void Slot::InitToken() {
-	CK_RV rv;
-	
-	std::string PIN;
-	CK_UTF8CHAR PINBuff[32];
-	std::string label;
-	CK_UTF8CHAR labelBuff[32];
-	std::cout << "Введите PIN Администратора: ";
-	std::cin >> PIN;
-	std::cout << "Введите значение label для токена: ";
-	std::cin >> label;
-
-	memset(labelBuff, ' ', sizeof(labelBuff));
-	memcpy(labelBuff, label.c_str(), label.size()+1);
-	memcpy(PINBuff, PIN.c_str(), PIN.size()+1);
-
-	rv = m_provider->GetFuncListPtr()->C_InitToken(m_id, PINBuff, strlen(PIN.c_str()), labelBuff);
-	
-	if (rv != CKR_OK)
-		throw RetVal(rv);
-}
-
-
-
-class Token {
-private:
-	CryptoProvider* m_provider;
-	CK_TOKEN_INFO* m_info;
-	unsigned char* m_label;
-public:
-
-	Token(CryptoProvider* provider, CK_TOKEN_INFO* info) {
-		m_provider = provider;
-		m_info = info;
-		m_label = info->label;
-	}
-
-	CryptoProvider* GetProviderPtr() {
-		return m_provider;
-	}
-
-	CK_TOKEN_INFO* GetInfo() {
-		return m_info;
-	}
-
-	unsigned char* GetLabel() {
-		return m_label;
-	}
-
-};
-
-
-
-class key_AES {
-private:
-	CK_MECHANISM m_mechanism = {
-	  CKM_AES_KEY_GEN, NULL_PTR, 0
-	};
-	CryptoProvider* m_provider;
-
-public:
-	key_AES(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_key, CryptoProvider* provider, 
-		std::vector<CK_ATTRIBUTE> objTemplate) : m_provider(provider) 
-	{
-		CK_RV rv;
-		rv = m_provider->GetFuncListPtr()->C_GenerateKey(h_session, &m_mechanism, &objTemplate[0], objTemplate.size(), &h_key);
-
-		if (rv != CKR_OK)
-			throw RetVal(rv);
-
-	}
-
-};
-
 
 
 int main() {
@@ -305,7 +26,7 @@ int main() {
 	CryptoProvider provider(L"D:\\SoftHSM2\\lib\\softhsm2-x64.dll");
 
 	CK_BYTE app = 1;
-	
+
 
 	CK_C_INITIALIZE_ARGS initArgs;
 
@@ -330,9 +51,9 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	std::vector<CK_SLOT_ID> slotCollection;
+	std::vector<Slot*> slotStorage;
 	try {
-		provider.GetSlotCollection(true, slotCollection);
+		provider.GetSlotCollection(true, slotStorage);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "GetSlotCollection\n";
@@ -341,28 +62,25 @@ int main() {
 	}
 
 	std::vector<Token*> tokenCollection;
-	for (size_t i = 0; i < slotCollection.size(); ++i) {
-		Slot slot(slotCollection[i], &provider);
+	for (size_t i = 0; i < slotStorage.size(); ++i) {
 		try {
-			slot.InitToken();
+			slotStorage[i]->InitToken();
 		}
 		catch (RetVal RetEx) {
 			std::cout << "InitToken\n";
 			std::cout << RetEx.what();
 			return RetEx.errcode();
 		}
-		Token token(&provider, slot.GetTokenInfo());
+		Token token(&provider, slotStorage[i]->GetTokenInfo());
 		tokenCollection.push_back(&token);
 	}
 
-	PrintSlots(slotCollection);
+	PrintSlots(slotStorage);
 
+	Session* session;
 
-
-	CK_SESSION_HANDLE h_Session;
-
-	try {
-		provider.OpenSession(slotCollection[0], h_Session, app);
+	try {	
+		session = slotStorage[0]->OpenSession(1);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "OpenSession\n";
@@ -373,7 +91,7 @@ int main() {
 
 
 	try {
-		provider.Login(h_Session, CKU_SO);
+		session->Login(CKU_SO);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
@@ -382,7 +100,7 @@ int main() {
 	}
 
 	try {
-		provider.InitPin(h_Session);
+		session->InitPin();
 	}
 	catch (RetVal RetEx) {
 		std::cout << "InitPin\n";
@@ -391,7 +109,7 @@ int main() {
 	}
 
 	try {
-		provider.Logout(h_Session);
+		session->Logout();
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
@@ -400,7 +118,7 @@ int main() {
 	}
 
 	try {
-		provider.Login(h_Session, CKU_USER);
+		session->Login(CKU_USER);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
@@ -408,7 +126,7 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	
+
 
 	CK_OBJECT_HANDLE h_Key;
 
@@ -421,11 +139,11 @@ int main() {
 	{
 		{CKA_CLASS, &KeyClass, sizeof(KeyClass)},
 		{CKA_KEY_TYPE, &KeyType, sizeof(KeyType)},
-		{}
+		{CKA_VALUE}
 	};
 
 	try {
-		provider.CreateObject(h_Session, h_Key, keyTemplate);
+		provider.CreateObject(session->GetHandle(), h_Key, keyTemplate);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "CreateObject\n";
@@ -442,14 +160,14 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	try {
+	/*try {
 		provider.CloseSession(h_Session);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "CloseSession\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
-	}
+	}*/
 
 	try {
 		provider.Finalize();
