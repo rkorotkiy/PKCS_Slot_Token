@@ -8,8 +8,11 @@ Session* Slot::OpenSession(CK_BYTE application) {
 	if (rv != CKR_OK)
 		throw RetVal(rv);
 
-	Session session(h_session, this);
-	return &session;
+	//Session* session(h_session, this);
+	//return &session;
+
+	Session* session = new Session(h_session, this);
+	return session;
 }
 
 CK_TOKEN_INFO* Slot::GetTokenInfo() {

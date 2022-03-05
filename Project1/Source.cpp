@@ -75,7 +75,7 @@ int main() {
 	Session* session;
 
 	try {	
-		session = slotStorage[0]->OpenSession(1);
+		session = slotStorage[0]->OpenSession(1);  
 	}
 	catch (RetVal RetEx) {
 		std::cout << "OpenSession\n";
@@ -86,7 +86,7 @@ int main() {
 
 
 	try {
-		session->Login(CKU_SO);
+		session->Login(CKU_SO);           // пропадают значени€ полей
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
@@ -121,36 +121,19 @@ int main() {
 		return RetEx.errcode();
 	}
 
+	CK_UTF8CHAR label;
+	std::cout << "¬ведите label дл€ AESKey";
+	std::cin >> label;
 
+	CK_OBJECT_HANDLE AESKey = NULL_PTR;
 
-	CK_OBJECT_HANDLE h_Key;
-
-	CK_OBJECT_CLASS KeyClass = CKO_SECRET_KEY;
-	CK_KEY_TYPE KeyType = CKK_AES;
-	CK_BBOOL True = CK_TRUE;
-	CK_BBOOL False = CK_FALSE;
-
-	std::vector<CK_ATTRIBUTE> keyTemplate
-	{
-		{CKA_CLASS, &KeyClass, sizeof(KeyClass)},
-		{CKA_KEY_TYPE, &KeyType, sizeof(KeyType)},
-		{CKA_VALUE}
-	};
-
+	KeyAES AES;
+	
 	try {
-		provider.CreateObject(session->GetHandle(), &h_Key, keyTemplate);
+		AES.Generate(&label, 16, 16, AESKey);
 	}
 	catch (RetVal RetEx) {
-		std::cout << "CreateObject\n";
-		std::cout << RetEx.what();
-		return RetEx.errcode();
-	}
-
-	try {
-		provider.DestroyObject(session->GetHandle(), &h_Key);
-	}
-	catch (RetVal RetEx) {
-		std::cout << "DestroyObject\n";
+		std::cout << "Generate\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}

@@ -89,6 +89,45 @@ public:
 	void Close();
 };
 
+class KeyAES{
+private:
+	
+	Session* m_session;
+	CryptoProvider* m_provider;
+
+	//AES key attributes
+
+	CK_OBJECT_CLASS aes_objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE aes_keyType = CKK_AES;
+	CK_BBOOL True = CK_TRUE;
+	CK_UTF8CHAR* aes_keyLabel;
+	CK_BYTE aes_keyValue;
+	CK_ULONG aes_keyValueLen;
+
+	CK_ATTRIBUTE AESTemplate[7] = {
+		{CKA_CLASS, &aes_objClass, sizeof(aes_objClass)},
+		{CKA_KEY_TYPE, &aes_keyType, sizeof(aes_keyType)},
+		{CKA_TOKEN, &True, sizeof(True)},
+		{CKA_LABEL, &aes_keyLabel, sizeof(aes_keyLabel)},
+		{CKA_VALUE, &aes_keyValue, sizeof(aes_keyValue)},
+		{CKA_VALUE_LEN, &aes_keyValueLen, sizeof(aes_keyValueLen)},
+		{CKA_ENCRYPT, &True, sizeof(true)}
+	};
+
+	/*------------------------------------------------------------------------*/
+
+	CK_MECHANISM m_mechanism = {
+		CKM_AES_KEY_GEN, NULL_PTR, 0
+	};
+
+public:
+	void Generate(CK_UTF8CHAR* label, CK_BYTE value, CK_ULONG valueLen, CK_OBJECT_HANDLE handle);
+};
+
+
+
+
+
 
 
 
