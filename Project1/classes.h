@@ -89,27 +89,36 @@ public:
 	void Close();
 };
 
-class KeyAES{
-private:
-	
+
+class BasicKey {
+protected:
 	Session* m_session;
 	CryptoProvider* m_provider;
+public:
+	BasicKey(Session* m_Session, CryptoProvider* m_Provider) : m_session(m_Session), m_provider(m_Provider) {
 
+	}
+	Session* GetSession() { return m_session; }
+	CryptoProvider* GetProvider() { return m_provider; };
+};
+
+
+class KeyAES : public BasicKey{
+private:
+	
 	//AES key attributes
 
 	CK_OBJECT_CLASS aes_objClass = CKO_SECRET_KEY;
 	CK_KEY_TYPE aes_keyType = CKK_AES;
 	CK_BBOOL True = CK_TRUE;
-	CK_UTF8CHAR* aes_keyLabel;
-	CK_BYTE aes_keyValue;
+	CK_UTF8CHAR aes_keyLabel[32];
 	CK_ULONG aes_keyValueLen;
 
-	CK_ATTRIBUTE AESTemplate[7] = {
+	CK_ATTRIBUTE AESTemplate[6] = {
 		{CKA_CLASS, &aes_objClass, sizeof(aes_objClass)},
 		{CKA_KEY_TYPE, &aes_keyType, sizeof(aes_keyType)},
 		{CKA_TOKEN, &True, sizeof(True)},
 		{CKA_LABEL, &aes_keyLabel, sizeof(aes_keyLabel)},
-		{CKA_VALUE, &aes_keyValue, sizeof(aes_keyValue)},
 		{CKA_VALUE_LEN, &aes_keyValueLen, sizeof(aes_keyValueLen)},
 		{CKA_ENCRYPT, &True, sizeof(true)}
 	};
@@ -121,79 +130,6 @@ private:
 	};
 
 public:
-	void Generate(CK_UTF8CHAR* label, CK_BYTE value, CK_ULONG valueLen, CK_OBJECT_HANDLE handle);
+	KeyAES(BasicKey* bKey) : BasicKey(bKey->GetSession(), bKey->GetProvider()) {};
+	void Generate(CK_ULONG valueLen, CK_OBJECT_HANDLE handle);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//class key_AES {
-//private:
-//	CK_MECHANISM m_mechanism = {          //class key -> наследование key aes
-//	  CKM_AES_KEY_GEN, NULL_PTR, 0
-//	};
-//	CryptoProvider* m_provider;
-//
-//public:
-//	key_AES(CK_SESSION_HANDLE h_session, CK_OBJECT_HANDLE h_key, CryptoProvider* provider,
-//		std::vector<CK_ATTRIBUTE> objTemplate) : m_provider(provider)
-//	{
-//		CK_RV rv;
-//		rv = m_provider->GetFuncListPtr()->C_GenerateKey(h_session, &m_mechanism, &objTemplate[0], objTemplate.size(), &h_key);
-//
-//		if (rv != CKR_OK)
-//			throw RetVal(rv);
-//
-//	}
-//
-//};

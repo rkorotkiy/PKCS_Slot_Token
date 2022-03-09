@@ -121,19 +121,15 @@ int main() {
 		return RetEx.errcode();
 	}
 
-	CK_UTF8CHAR label;
-	std::cout << "¬ведите label дл€ AESKey";
-	std::cin >> label;
+	BasicKey basickey(session, &provider);
+	KeyAES AES(&basickey);
+	CK_OBJECT_HANDLE h_AES = NULL_PTR;
 
-	CK_OBJECT_HANDLE AESKey = NULL_PTR;
-
-	KeyAES AES;
-	
 	try {
-		AES.Generate(&label, 16, 16, AESKey);
+		AES.Generate(16, h_AES);
 	}
 	catch (RetVal RetEx) {
-		std::cout << "Generate\n";
+		std::cout << "Login\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}
