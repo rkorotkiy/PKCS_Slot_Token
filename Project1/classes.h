@@ -45,7 +45,7 @@ public:
 	Session* OpenSession(CK_BYTE application);
 
 	CK_TOKEN_INFO* GetTokenInfo();
-	void InitToken();
+	void InitToken(std::string PIN, std::string label);
 
 	CK_FUNCTION_LIST* GetFuncListPtr();
 	CK_SLOT_ID* GetSlotId();
@@ -81,13 +81,14 @@ public:
 	Session(CK_SESSION_HANDLE h_Session, Slot* m_Slot) : h_session(h_Session), m_slot(m_Slot) { }
 	CK_SESSION_HANDLE GetHandle();
 
-	void Login(CK_USER_TYPE userType);
+	void Login(CK_USER_TYPE userType, std::string PIN);
 	void Logout();
 
-	void InitPin();
+	void InitPin(std::string PIN);
 
 	void Close();
 };
+
 
 
 class BasicKey {
@@ -103,23 +104,24 @@ public:
 };
 
 
+
 class KeyAES : public BasicKey{
 private:
 	
 	//AES key attributes
 
-	CK_OBJECT_CLASS aes_objClass = CKO_SECRET_KEY;
-	CK_KEY_TYPE aes_keyType = CKK_AES;
+	CK_OBJECT_CLASS objClass = CKO_SECRET_KEY;
+	CK_KEY_TYPE keyType = CKK_AES;
 	CK_BBOOL True = CK_TRUE;
-	CK_UTF8CHAR aes_keyLabel[32];
-	CK_ULONG aes_keyValueLen;
+	CK_UTF8CHAR keyLabel[32];
+	CK_ULONG keyValueLen;
 
 	CK_ATTRIBUTE AESTemplate[6] = {
-		{CKA_CLASS, &aes_objClass, sizeof(aes_objClass)},
-		{CKA_KEY_TYPE, &aes_keyType, sizeof(aes_keyType)},
+		{CKA_CLASS, &objClass, sizeof(objClass)},
+		{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
 		{CKA_TOKEN, &True, sizeof(True)},
-		{CKA_LABEL, &aes_keyLabel, sizeof(aes_keyLabel)},
-		{CKA_VALUE_LEN, &aes_keyValueLen, sizeof(aes_keyValueLen)},
+		{CKA_LABEL, &keyLabel, sizeof(keyLabel)},
+		{CKA_VALUE_LEN, &keyValueLen, sizeof(keyValueLen)},
 		{CKA_ENCRYPT, &True, sizeof(true)}
 	};
 
@@ -131,5 +133,75 @@ private:
 
 public:
 	KeyAES(BasicKey* bKey) : BasicKey(bKey->GetSession(), bKey->GetProvider()) {};
-	void Generate(CK_ULONG valueLen, CK_OBJECT_HANDLE handle);
+	void Generate(CK_ULONG valueLen, CK_OBJECT_HANDLE handle, std::string label);
+};
+
+
+
+class KeysRSA {
+private:
+
+	//RSA public key template
+
+	CK_OBJECT_CLASS objClass = CKO_PUBLIC_KEY;
+	CK_KEY_TYPE keyType = CKK_RSA;
+	CK_UTF8CHAR label;
+	CK_BYTE modulusBits;
+	CK_BYTE exponent;
+	CK_BBOOL True = CK_TRUE;
+	CK_ATTRIBUTE RSAPublicKeyTemplate[8] = {
+		{CKA_CLASS, &objClass, sizeof(objClass)},
+		{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
+		{CKA_TOKEN, &True, sizeof(true)},
+		{CKA_LABEL, &label, sizeof(label) - 1},
+		{CKA_WRAP, &True, sizeof(true)},
+		{CKA_ENCRYPT, &True, sizeof(true)},
+		{CKA_MODULUS_BITS, &modulusBits, sizeof(modulusBits)},
+		{CKA_PUBLIC_EXPONENT, &exponent, sizeof(exponent)}
+	};
+
+	/*------------------------------------------------------------------------*/
+
+	//RSA private key template
+
+	CK_OBJECT_CLASS objClass = CKO_PRIVATE_KEY;
+	CK_KEY_TYPE keyType = CKK_RSA;
+	CK_UTF8CHAR label;
+	CK_BYTE subject;
+	CK_BYTE id;
+	//CK_BYTE modulus;
+	//CK_BYTE publicExponent;
+	//CK_BYTE privateExponent;
+	//CK_BYTE prime1;
+	//CK_BYTE prime2;
+	//CK_BYTE exponent1;
+	//CK_BYTE exponent2;
+	//CK_BYTE coefficient;
+	CK_BBOOL True = CK_TRUE;
+
+	CK_ATTRIBUTE RSAPrivateKeyTemplate[9] = {
+
+	{CKA_CLASS, &objClass, sizeof(objClass)},
+	{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
+	{CKA_TOKEN, &True, sizeof(true)},
+	{CKA_LABEL, &label, sizeof(label) - 1},
+	{CKA_SUBJECT, &subject, sizeof(subject)},
+	{CKA_ID, &id, sizeof(id)},
+	{CKA_SENSITIVE, &True, sizeof(true)},
+	{CKA_DECRYPT, &True, sizeof(true)},
+	{CKA_SIGN, &True, sizeof(true)},
+	/*{CKA_MODULUS, modulus, sizeof(modulus)},*/
+	/*{CKA_PUBLIC_EXPONENT, publicExponent, sizeof(publicExponent)},*/
+	/*{CKA_PRIVATE_EXPONENT, privateExponent, sizeof(privateExponent)},*/
+	/*{CKA_PRIME_1, prime1, sizeof(prime1)},*/
+	/*{CKA_PRIME_2, prime2, sizeof(prime2)},*/
+	/*{CKA_EXPONENT_1, exponent1, sizeof(exponent1)},*/
+	/*{CKA_EXPONENT_2, exponent2, sizeof(exponent2)},*/
+	/*{CKA_COEFFICIENT, coefficient, sizeof(coefficient)}*/
+	};
+
+	/*------------------------------------------------------------------------*/
+
+public:
+
 };

@@ -15,13 +15,10 @@ CK_SESSION_HANDLE Session::GetHandle() {
 	return h_session; 
 }
 
-void Session::Login(CK_USER_TYPE userType) {
+void Session::Login(CK_USER_TYPE userType, std::string PIN) {
 	CK_RV rv;
-	std::string PIN;
 	CK_UTF8CHAR PINBuff[32];
-
-	std::cout << "¬ведите PIN: ";
-	std::cin >> PIN;
+	
 	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
 
 	rv = m_slot->GetFuncListPtr()->C_Login(h_session, userType, PINBuff, strlen(PIN.c_str()));
@@ -39,13 +36,11 @@ void Session::Logout() {
 		throw RetVal(rv);
 }
 
-void Session::InitPin() {
+void Session::InitPin(std::string PIN) {
+	
 	CK_RV rv;
-	std::string PIN;
 	CK_UTF8CHAR PINBuff[32];
 
-	std::cout << "¬ведите PIN: ";
-	std::cin >> PIN;
 	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
 
 	rv = m_slot->GetFuncListPtr()->C_InitPIN(h_session, PINBuff, strlen(PIN.c_str()));

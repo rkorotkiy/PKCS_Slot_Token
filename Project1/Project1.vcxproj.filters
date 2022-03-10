@@ -30,7 +30,7 @@
     <ClCompile Include="Token.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="KeyFactory.cpp">
+    <ClCompile Include="KeyAES.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

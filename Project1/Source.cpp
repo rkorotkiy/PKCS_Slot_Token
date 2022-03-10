@@ -57,9 +57,18 @@ int main() {
 	}
 
 	std::vector<Token*> tokenCollection;
+
+	std::string LABEL;
+	std::string SOPIN;
+
+	std::cout << "¬ведите PIN S/O: ";
+	std::cin >> SOPIN;
+
 	for (size_t i = 0; i < slotStorage.size(); ++i) {
+		std::cout << "¬ведите значение label дл€ токена: ";
+		std::cin >> LABEL;
 		try {
-			slotStorage[i]->InitToken();
+			slotStorage[i]->InitToken(SOPIN, LABEL);
 		}
 		catch (RetVal RetEx) {
 			std::cout << "InitToken\n";
@@ -82,20 +91,26 @@ int main() {
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}
-
-
+	
+	std::string LoginPIN;
+	std::cout << "¬ведите PIN S/O: ";
+	std::cin >> LoginPIN;
 
 	try {
-		session->Login(CKU_SO);           // пропадают значени€ полей
+		session->Login(CKU_SO, LoginPIN);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}
+	
+	std::string UserInitPIN;
+	std::cout << "¬ведите PIN пользовател€ (инициализаци€): ";
+	std::cin >> UserInitPIN;
 
 	try {
-		session->InitPin();
+		session->InitPin(UserInitPIN);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "InitPin\n";
@@ -112,8 +127,11 @@ int main() {
 		return RetEx.errcode();
 	}
 
+	std::cout << "¬ведите PIN пользовател€: ";
+	std::cin >> LoginPIN;
+
 	try {
-		session->Login(CKU_USER);
+		session->Login(CKU_USER, LoginPIN);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";
@@ -125,8 +143,13 @@ int main() {
 	KeyAES AES(&basickey);
 	CK_OBJECT_HANDLE h_AES = NULL_PTR;
 
+	std::string AESKeyLabel;
+
+	std::cout << "¬ведите Label дл€ AES secret key: ";
+	std::cin >> AESKeyLabel;
+
 	try {
-		AES.Generate(16, h_AES);
+		AES.Generate(16, h_AES, AESKeyLabel);
 	}
 	catch (RetVal RetEx) {
 		std::cout << "Login\n";

@@ -8,9 +8,6 @@ Session* Slot::OpenSession(CK_BYTE application) {
 	if (rv != CKR_OK)
 		throw RetVal(rv);
 
-	//Session* session(h_session, this);
-	//return &session;
-
 	Session* session = new Session(h_session, this);
 	return session;
 }
@@ -26,17 +23,12 @@ CK_TOKEN_INFO* Slot::GetTokenInfo() {
 	return info;
 }
 
-void Slot::InitToken() {
+void Slot::InitToken(std::string PIN, std::string label) {
 	CK_RV rv;
 
-	std::string PIN;
+	
 	CK_UTF8CHAR PINBuff[32];
-	std::string label;
 	CK_UTF8CHAR labelBuff[32];
-	std::cout << "Введите PIN Администратора: ";
-	std::cin >> PIN;
-	std::cout << "Введите значение label для токена: ";
-	std::cin >> label;
 
 	memset(labelBuff, ' ', sizeof(labelBuff));
 	memcpy(labelBuff, label.c_str(), label.size() + 1);

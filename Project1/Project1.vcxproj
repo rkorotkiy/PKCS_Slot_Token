@@ -140,7 +140,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CryptoProvider.cpp" />
-    <ClCompile Include="KeyFactory.cpp" />
+    <ClCompile Include="KeyAES.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Source.cpp" />
