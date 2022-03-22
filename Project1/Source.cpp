@@ -152,7 +152,48 @@ int main() {
 		AES.Generate(16, h_AES, AESKeyLabel);
 	}
 	catch (RetVal RetEx) {
-		std::cout << "Login\n";
+		std::cout << "AES Generate\n";
+		std::cout << RetEx.what();
+		return RetEx.errcode();
+	}
+
+	KeysRSA RSA(&basickey);
+
+	CK_OBJECT_HANDLE h_RSA_pr = NULL_PTR;
+	CK_OBJECT_HANDLE h_RSA_pub = NULL_PTR;
+	std::string RSA_pubKeyLabel;
+	std::string RSA_modulusBits;
+	std::string RSA_exponent;
+	std::string RSA_prKeylabel;
+	std::string RSA_subject;
+	std::string RSA_id;
+
+	std::cout << "¬ведите public key label";
+	std::cin >> RSA_pubKeyLabel;
+	std::cout << "¬ведите modulus bits";
+	std::cin >> RSA_modulusBits;
+	std::cout << "¬ведите exponent";
+	std::cin >> RSA_exponent;
+	std::cout << "¬ведите private key label";
+	std::cin >> RSA_prKeylabel;
+	std::cout << "¬ведите subject";
+	std::cin >> RSA_subject;
+	std::cout << "¬ведите id";
+	std::cin >> RSA_id;
+
+	try {
+		RSA.Generate(
+			RSA_pubKeyLabel,
+			RSA_modulusBits,
+			RSA_exponent,
+			RSA_prKeylabel,
+			RSA_subject,
+			RSA_id,
+			h_RSA_pr, h_RSA_pub
+		);
+	}
+	catch (RetVal RetEx) {
+		std::cout << "RSA Generate\n";
 		std::cout << RetEx.what();
 		return RetEx.errcode();
 	}

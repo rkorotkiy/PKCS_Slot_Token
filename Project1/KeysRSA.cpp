@@ -19,6 +19,12 @@ void KeysRSA::Generate(
 	memcpy(subject, private_subject.c_str(), private_subject.size() + 1);
 	memcpy(id, private_id.c_str(), private_id.size() + 1);
 
-	rv = m_provider->GetFuncListPtr()->C_GenerateKeyPair(m_session->GetHandle(), &mechanism, RSAPublicKeyTemplate, 8, RSAPrivateKeyTemplate, 9, &publicKeyHandle, &privateKeyHandle);
+	rv = m_provider->GetFuncListPtr()->C_GenerateKeyPair(
+		m_session->GetHandle(), 
+		&mechanism, 
+		RSAPublicKeyTemplate, 8, 
+		RSAPrivateKeyTemplate, 9, 
+		&publicKeyHandle, &privateKeyHandle
+	);
 
 }
