@@ -141,6 +141,7 @@
   <ItemGroup>
     <ClCompile Include="CryptoProvider.cpp" />
     <ClCompile Include="KeyAES.cpp" />
+    <ClCompile Include="KeysRSA.cpp" />
     <ClCompile Include="Session.cpp" />
     <ClCompile Include="Slot.cpp" />
     <ClCompile Include="Source.cpp" />

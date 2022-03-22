@@ -138,22 +138,22 @@ public:
 
 
 
-class KeysRSA {
+class KeysRSA : public BasicKey {
 private:
 
 	//RSA public key template
 
 	CK_OBJECT_CLASS objClass = CKO_PUBLIC_KEY;
 	CK_KEY_TYPE keyType = CKK_RSA;
-	CK_UTF8CHAR label;
-	CK_BYTE modulusBits;
-	CK_BYTE exponent;
+	CK_UTF8CHAR pub_label[32];
+	CK_BYTE modulusBits[32];
+	CK_BYTE exponent[32];
 	CK_BBOOL True = CK_TRUE;
 	CK_ATTRIBUTE RSAPublicKeyTemplate[8] = {
 		{CKA_CLASS, &objClass, sizeof(objClass)},
 		{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
 		{CKA_TOKEN, &True, sizeof(true)},
-		{CKA_LABEL, &label, sizeof(label) - 1},
+		{CKA_LABEL, &pub_label, sizeof(pub_label) - 1},
 		{CKA_WRAP, &True, sizeof(true)},
 		{CKA_ENCRYPT, &True, sizeof(true)},
 		{CKA_MODULUS_BITS, &modulusBits, sizeof(modulusBits)},
@@ -166,9 +166,9 @@ private:
 
 	CK_OBJECT_CLASS objClass = CKO_PRIVATE_KEY;
 	CK_KEY_TYPE keyType = CKK_RSA;
-	CK_UTF8CHAR label;
-	CK_BYTE subject;
-	CK_BYTE id;
+	CK_UTF8CHAR pr_label[32];
+	CK_BYTE subject[32];
+	CK_BYTE id[32];
 	//CK_BYTE modulus;
 	//CK_BYTE publicExponent;
 	//CK_BYTE privateExponent;
@@ -180,28 +180,40 @@ private:
 	CK_BBOOL True = CK_TRUE;
 
 	CK_ATTRIBUTE RSAPrivateKeyTemplate[9] = {
-
-	{CKA_CLASS, &objClass, sizeof(objClass)},
-	{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
-	{CKA_TOKEN, &True, sizeof(true)},
-	{CKA_LABEL, &label, sizeof(label) - 1},
-	{CKA_SUBJECT, &subject, sizeof(subject)},
-	{CKA_ID, &id, sizeof(id)},
-	{CKA_SENSITIVE, &True, sizeof(true)},
-	{CKA_DECRYPT, &True, sizeof(true)},
-	{CKA_SIGN, &True, sizeof(true)},
-	/*{CKA_MODULUS, modulus, sizeof(modulus)},*/
-	/*{CKA_PUBLIC_EXPONENT, publicExponent, sizeof(publicExponent)},*/
-	/*{CKA_PRIVATE_EXPONENT, privateExponent, sizeof(privateExponent)},*/
-	/*{CKA_PRIME_1, prime1, sizeof(prime1)},*/
-	/*{CKA_PRIME_2, prime2, sizeof(prime2)},*/
-	/*{CKA_EXPONENT_1, exponent1, sizeof(exponent1)},*/
-	/*{CKA_EXPONENT_2, exponent2, sizeof(exponent2)},*/
-	/*{CKA_COEFFICIENT, coefficient, sizeof(coefficient)}*/
+		{CKA_CLASS, &objClass, sizeof(objClass)},
+		{CKA_KEY_TYPE, &keyType, sizeof(keyType)},
+		{CKA_TOKEN, &True, sizeof(true)},
+		{CKA_LABEL, &pr_label, sizeof(pr_label) - 1},
+		{CKA_SUBJECT, &subject, sizeof(subject)},
+		{CKA_ID, &id, sizeof(id)},
+		{CKA_SENSITIVE, &True, sizeof(true)},
+		{CKA_DECRYPT, &True, sizeof(true)},
+		{CKA_SIGN, &True, sizeof(true)},
+		/*{CKA_MODULUS, modulus, sizeof(modulus)},*/
+		/*{CKA_PUBLIC_EXPONENT, publicExponent, sizeof(publicExponent)},*/
+		/*{CKA_PRIVATE_EXPONENT, privateExponent, sizeof(privateExponent)},*/
+		/*{CKA_PRIME_1, prime1, sizeof(prime1)},*/
+		/*{CKA_PRIME_2, prime2, sizeof(prime2)},*/
+		/*{CKA_EXPONENT_1, exponent1, sizeof(exponent1)},*/
+		/*{CKA_EXPONENT_2, exponent2, sizeof(exponent2)},*/
+		/*{CKA_COEFFICIENT, coefficient, sizeof(coefficient)}*/
 	};
 
 	/*------------------------------------------------------------------------*/
 
-public:
+	CK_MECHANISM mechanism = {
+		CKM_RSA_PKCS_KEY_PAIR_GEN, NULL_PTR, 0
+	};
 
+public:
+	KeysRSA(BasicKey* bKey) : BasicKey(bKey->GetSession(), bKey->GetProvider()) {};
+	void Generate(
+		std::string public_label,
+		std::string public_modulusBits,
+		std::string public_exponent,
+		std::string private_label,
+		std::string private_subject,
+		std::string private_id,
+		CK_OBJECT_HANDLE privateKeyHandle,
+		CK_OBJECT_HANDLE publicKeyHandle);
 };
