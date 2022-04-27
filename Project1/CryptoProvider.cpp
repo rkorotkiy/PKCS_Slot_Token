@@ -1,4 +1,5 @@
-#include "classes.h"
+//#include "classes.h"
+#include "CryptoProvider.h"
 
 CryptoProvider::CryptoProvider(const wchar_t* PATH_TO_DLL) {
 	m_lib = LoadLibrary(PATH_TO_DLL);

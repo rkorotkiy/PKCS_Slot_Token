@@ -1,3 +1,6 @@
+#ifndef PKCSEXCEPTIONS_H
+#define PKCSEXCEPTIONS_H
+
 #include <string>
 #include <iostream>
 #include "pkcs11.h"
@@ -90,3 +93,5 @@ public:
 	}
 	int errcode() { return code; }
 };
+
+#endif

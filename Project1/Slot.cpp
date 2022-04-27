@@ -1,4 +1,5 @@
-#include "classes.h"
+//#include "classes.h"
+#include "Slot.h"
 
 Session* Slot::OpenSession(CK_BYTE application) {
 	CK_RV rv;
@@ -23,18 +24,22 @@ CK_TOKEN_INFO* Slot::GetTokenInfo() {
 	return info;
 }
 
-void Slot::InitToken(std::string PIN, std::string label) {
+void Slot::InitToken(unsigned char* pin, unsigned char* label) {
 	CK_RV rv;
 
 	
-	CK_UTF8CHAR PINBuff[32];
+	/*CK_UTF8CHAR PINBuff[32];
 	CK_UTF8CHAR labelBuff[32];
 
 	memset(labelBuff, ' ', sizeof(labelBuff));
 	memcpy(labelBuff, label.c_str(), label.size() + 1);
-	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);
+	memcpy(PINBuff, PIN.c_str(), PIN.size() + 1);*/
 
-	rv = m_provider->GetFuncListPtr()->C_InitToken(m_id, PINBuff, strlen(PIN.c_str()), labelBuff);
+	CK_UTF8CHAR labelBuff[32];
+	memset(labelBuff, ' ', sizeof(labelBuff));
+	memcpy(labelBuff, label, sizeof(label));
+
+	rv = m_provider->GetFuncListPtr()->C_InitToken(m_id, pin, sizeof(pin), labelBuff);
 
 	if (rv != CKR_OK)
 		throw RetVal(rv);

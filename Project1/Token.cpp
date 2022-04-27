@@ -1,4 +1,5 @@
-#include "classes.h"
+//#include "classes.h"
+#include "Token.h"
 
 CryptoProvider* Token::GetProviderPtr() {
 	return m_provider;
