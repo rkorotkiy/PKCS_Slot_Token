@@ -1,11 +1,6 @@
 #ifndef SLOT_H
 #define SLOT_H
 
-#include "pkcs11.h"
-#include "PKCSExceptions.h"
-#include "CryptoProvider.h"
-#include "Session.h"
-
 class Slot {
 private:
 	CK_SLOT_ID m_id;

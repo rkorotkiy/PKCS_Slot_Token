@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <vector>
 
-//#include "classes.h"
 #include "CryptoProvider.h"
 #include "Slot.h"
 #include "Token.h"
@@ -11,13 +10,11 @@
 #include "KeyAES.h"
 #include "KeysRSA.h"
 
-
 void PrintSlots(std::vector<Slot*> slotStorage) {
 	for (size_t i = 0; i < slotStorage.size(); ++i) {
 		std::cout << slotStorage[i]->GetSlotId() << std::endl;
 	}
 }
-
 
 int main() {
 

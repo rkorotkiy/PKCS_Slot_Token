@@ -1,5 +1,7 @@
-//#include "classes.h"
+#include"pkcs11.h"
+#include "PKCSExceptions.h"
 #include "Session.h"
+#include "Slot.h"
 
 
 

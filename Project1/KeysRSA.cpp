@@ -1,5 +1,7 @@
-//#include "classes.h"
+#include "pkcs11.h"
+#include "PKCSExceptions.h"
 #include "KeysRSA.h"
+#include "BasicKey.h"
 
 void KeysRSA::Generate(
 	unsigned char* public_label,

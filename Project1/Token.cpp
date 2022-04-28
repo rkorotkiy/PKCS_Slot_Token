@@ -1,5 +1,8 @@
 //#include "classes.h"
+#include "pkcs11.h"
+#include "PKCSExceptions.h"
 #include "Token.h"
+#include "CryptoProvider.h"
 
 CryptoProvider* Token::GetProviderPtr() {
 	return m_provider;

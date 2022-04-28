@@ -1,10 +1,6 @@
 #ifndef KEYAES_H
 #define KEYAES_H
 
-#include "pkcs11.h"
-#include "PKCSExceptions.h"
-#include "BasicKey.h"
-
 class KeyAES : public BasicKey {
 private:
 

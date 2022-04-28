@@ -1,10 +1,6 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "pkcs11.h"
-#include "PKCSExceptions.h"
-#include "Slot.h"
-
 class Session {
 private:
 	CK_SESSION_HANDLE h_session;

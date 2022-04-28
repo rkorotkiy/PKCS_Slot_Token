@@ -1,10 +1,6 @@
 #ifndef TOKEN_H
 #define TOKEN_H
 
-#include "pkcs11.h"
-#include "PKCSExceptions.h"
-#include "CryptoProvider.h"
-
 class Token {
 private:
 	CryptoProvider* m_provider;

@@ -1,5 +1,8 @@
-//#include "classes.h"
+#include "pkcs11.h"
+#include "PKCSExceptions.h"
+#include "CryptoProvider.h"
 #include "Slot.h"
+#include "Session.h"
 
 Session* Slot::OpenSession(CK_BYTE application) {
 	CK_RV rv;

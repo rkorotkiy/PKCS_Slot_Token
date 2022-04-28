@@ -1,5 +1,7 @@
-//#include "classes.h"
+#include "pkcs11.h"
+#include "PKCSExceptions.h"
 #include "KeyAES.h"
+#include "BasicKey.h"
 
 void KeyAES::Generate(CK_ULONG valueLen, CK_OBJECT_HANDLE handle, unsigned char* label) {
 

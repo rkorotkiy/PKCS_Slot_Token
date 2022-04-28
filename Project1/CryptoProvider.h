@@ -1,14 +1,6 @@
 #ifndef CRYPTOPROVIDER_H
 #define CRYPTOPROVIDER_H
 
-#include "pkcs11.h"
-#include "tdef.h"
-#include "PKCSExceptions.h"
-#include "Slot.h"
-#include <Windows.h>
-#include <libloaderapi.h>
-#include <vector>
-
 class CryptoProvider {
 private:
 	HINSTANCE m_lib;

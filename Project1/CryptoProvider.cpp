@@ -1,5 +1,13 @@
 //#include "classes.h"
+
+#include "pkcs11.h"
+#include "tdef.h"
+#include "PKCSExceptions.h"
 #include "CryptoProvider.h"
+#include "Slot.h"
+#include <Windows.h>
+#include <libloaderapi.h>
+#include <vector>
 
 CryptoProvider::CryptoProvider(const wchar_t* PATH_TO_DLL) {
 	m_lib = LoadLibrary(PATH_TO_DLL);
